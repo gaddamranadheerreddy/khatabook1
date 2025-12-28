@@ -288,6 +288,7 @@ import {
 import { useRouter, useLocalSearchParams, useFocusEffect, useNavigation } from 'expo-router';
 // import { FileText } from 'lucide-react-native';
 import { TrendingUp, TrendingDown, FileText, Download } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   getPersonWithBalance,
@@ -307,6 +308,7 @@ export default function LedgerScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
     
   /* ======================
      LOAD DATA
@@ -505,7 +507,9 @@ const formatCurrency = (amt: number) =>
     <Text style={styles.buttonText}>− OUT</Text>
   </TouchableOpacity>
 </View> */}
-<View style={styles.buttonContainer}>
+{/* <View style={styles.buttonContainer}> */}
+    <View style={[styles.buttonContainer, { paddingBottom: insets.bottom || 12 }]}>
+
         <TouchableOpacity
           style={[styles.actionButton, styles.creditButton]}
           onPress={() =>
@@ -597,7 +601,8 @@ const styles = StyleSheet.create({
 
   buttonContainer: {
   flexDirection: 'row',
-  padding: 12,
+  paddingHorizontal: 12,
+  paddingTop: 12,
   backgroundColor: '#FFF',
   borderTopWidth: 1,
   borderTopColor: '#E5E7EB',

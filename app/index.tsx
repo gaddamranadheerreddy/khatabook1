@@ -1792,6 +1792,12 @@ export default function HomeScreen() {
             params: { personId: item.id.toString() },
           })
         }
+        onLongPress={() =>
+          router.push({
+            pathname: '/manage-person',
+            params: { personId: item.id.toString() },
+          })
+        }
       >
         <View style={styles.personIcon}>
           <User size={24} color="#6B7280" />

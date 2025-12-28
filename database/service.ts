@@ -284,10 +284,10 @@ export async function getPersonById(id: number) {
   );
 }
 
-export async function deletePerson(id: number) {
-  const db = getDatabase();
-  await db.runAsync('DELETE FROM people WHERE id = ?', [id]);
-}
+// export async function deletePerson(id: number) {
+//   const db = getDatabase();
+//   await db.runAsync('DELETE FROM people WHERE id = ?', [id]);
+// }
 
 export async function getPersonWithBalance(
   personId: number
@@ -314,6 +314,24 @@ export async function getPersonWithBalance(
   );
 
   return row ?? null;
+}
+
+
+export async function updatePerson(
+  id: number,
+  data: { name: string; phone?: string | null }
+) {
+  const db = getDatabase();
+  await db.runAsync(
+    'UPDATE people SET name = ?, phone = ? WHERE id = ?',
+    [data.name, data.phone ?? null, id]
+  );
+}
+
+export async function deletePerson(id: number) {
+  const db = getDatabase();
+  await db.runAsync('DELETE FROM transactions WHERE person_id = ?', [id]);
+  await db.runAsync('DELETE FROM people WHERE id = ?', [id]);
 }
 
 

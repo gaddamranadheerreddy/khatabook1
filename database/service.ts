@@ -218,6 +218,16 @@ export async function renameCompany(
   );
 }
 
+export async function getCompanyById(id: number) {
+  const db = getDatabase();
+  const res = await db.getFirstAsync<Company>(
+    'SELECT id, name, note FROM companies WHERE id = ?',
+    [id]
+  );
+  return res ?? null;
+}
+
+
 // export async function deleteCompany(companyId: number) {
 //   const db = getDatabase();
 //   await db.runAsync(
@@ -290,6 +300,7 @@ export async function getPersonWithBalance(
       p.id,
       p.name,
       p.phone,
+      p.company_id,
       p.created_at,
       COALESCE(SUM(CASE WHEN t.type = 'credit' THEN t.amount ELSE 0 END), 0) AS total_credit,
       COALESCE(SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE 0 END), 0) AS total_debit,

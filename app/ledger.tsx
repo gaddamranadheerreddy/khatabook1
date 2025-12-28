@@ -294,8 +294,9 @@ import {
   getPersonWithBalance,
   getTransactionsByPerson,
   deleteTransaction,
+  getCompanyById,
 } from '@/database/service';
-import { PersonWithBalance, Transaction } from '@/database/types';
+import { PersonWithBalance, Transaction} from '@/database/types';
 import { exportPersonCsv } from '@/utils/exportcsv';
 
 
@@ -309,23 +310,44 @@ export default function LedgerScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const [companyName, setCompanyName] = useState<string | null>(null);
     
   /* ======================
      LOAD DATA
   ======================= */
+//   const loadData = useCallback(async () => {
+//     if (!id) return;
+
+//     try {
+//       const personData = await getPersonWithBalance(id);
+//       const txns = await getTransactionsByPerson(id);
+
+//       setPerson(personData);
+//       setTransactions(txns);
+//     } catch (e) {
+//       console.error('Failed to load ledger', e);
+//     }
+//   }, [id]);
+
   const loadData = useCallback(async () => {
-    if (!id) return;
+  if (!id) return;
 
-    try {
-      const personData = await getPersonWithBalance(id);
-      const txns = await getTransactionsByPerson(id);
+  try {
+    const personData = await getPersonWithBalance(id);
+    const txns = await getTransactionsByPerson(id);
 
-      setPerson(personData);
-      setTransactions(txns);
-    } catch (e) {
-      console.error('Failed to load ledger', e);
+    setPerson(personData);
+    setTransactions(txns);
+
+    if (personData?.company_id) {
+      const company = await getCompanyById(personData.company_id);
+      setCompanyName(company?.name ?? null);
     }
-  }, [id]);
+  } catch (e) {
+    console.error('Failed to load ledger', e);
+  }
+}, [id]);
+
 
   useFocusEffect(
     useCallback(() => {
@@ -449,6 +471,13 @@ const formatCurrency = (amt: number) =>
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.name}>{person.name}</Text>
+
+        {companyName && (
+        <Text style={styles.companyName}>
+            From {companyName}
+        </Text>
+        )}
+
         <Text
           style={[
             styles.total,
@@ -632,6 +661,11 @@ buttonText: {
   debitButton: { backgroundColor: '#EF4444' },
   creditButton: { backgroundColor: '#10B981' },
 
+companyName: {
+  fontSize: 13,
+  color: '#6B7280',
+  marginTop: 2,
+},
 
 });
 

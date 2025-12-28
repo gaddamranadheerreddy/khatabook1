@@ -237,6 +237,831 @@
 //----------------2--------------
 
 //-------3---------------
+// import * as FileSystem from 'expo-file-system/legacy';
+// import * as Sharing from 'expo-sharing';
+
+// import {
+//   getCompanies,
+//   getPeopleWithBalances,
+//   getPersonById,
+//   getTransactionsByPerson,
+// } from '@/database/service';
+
+// /* ============================
+//    HELPERS
+// ============================ */
+
+// const formatAmount = (n: number | null | undefined) =>
+//   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
+
+// const formatDateTime = (ts: number) =>
+//   new Date(ts * 1000).toLocaleString('en-IN', {
+//     day: '2-digit',
+//     month: 'short',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     hour12: true,
+//   });
+
+// async function writeAndShare(csv: string, filename: string) {
+//   const path = FileSystem.cacheDirectory + filename;
+//   await FileSystem.writeAsStringAsync(path, csv);
+//   await Sharing.shareAsync(path, {
+//     mimeType: 'text/csv',
+//     dialogTitle: 'Export CSV',
+//   });
+// }
+
+// /* ============================
+//    EXPORT COMPANY CSV
+// ============================ */
+
+// export async function exportCompanyCsv(companyId: number | null) {
+//   const companies = await getCompanies();
+//   const company =
+//     companyId === null
+//       ? { id: null, name: 'All Companies', note: '' }
+//       : companies.find(c => c.id === companyId);
+
+//   if (!company) return;
+
+//   const people = await getPeopleWithBalances(companyId);
+
+//   const rows: string[] = [];
+
+//   // HEADER
+//   rows.push(
+//     [
+//       'Company',
+//       'Company Note',
+//       'Person',
+//       'Date',
+//       'IN (Credit)',
+//       'OUT (Debit)',
+//       'Balance',
+//       'Transaction Note',
+//     ].join(',')
+//   );
+
+//   for (const person of people) {
+//     const txns = await getTransactionsByPerson(person.id);
+
+//     if (!txns.length) continue;
+
+//     // 🔹 1. ASC for balance calculation
+//     const asc = [...txns].sort((a, b) => a.date - b.date);
+
+//     let running = 0;
+//     const balanceMap = new Map<number, number>();
+
+//     for (const t of asc) {
+//       if (t.type === 'credit') running += t.amount; // IN
+//       else running -= t.amount; // OUT
+//       balanceMap.set(t.id, running);
+//     }
+
+//     // 🔹 2. DESC for export (latest first)
+//     const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//     for (const t of desc) {
+//       rows.push(
+//         [
+//           `"${company.name}"`,
+//           `"${company.note ?? ''}"`,
+//           `"${person.name}"`,
+//           `"${formatDateTime(t.date)}"`,
+//           t.type === 'credit' ? formatAmount(t.amount) : '',
+//           t.type === 'debit' ? formatAmount(t.amount) : '',
+//           formatAmount(balanceMap.get(t.id)),
+//           `"${t.note ?? ''}"`,
+//         ].join(',')
+//       );
+//     }
+//   }
+
+//   await writeAndShare(
+//     rows.join('\n'),
+//     `${company.name.replace(/\s+/g, '_')}_ledger.csv`
+//   );
+// }
+
+// /* ============================
+//    EXPORT PERSON CSV
+// ============================ */
+
+// export async function exportPersonCsv(personId: number) {
+//   const person = await getPersonById(personId);
+//   if (!person) throw new Error('Person not found');
+
+//   const txns = await getTransactionsByPerson(personId);
+//   if (!txns.length) return;
+
+//   const personName = person.name;
+
+//   const rows: string[] = [];
+
+//   // ======================
+//   // CSV HEADER
+//   // ======================
+//   rows.push(
+//     [
+//       'Person',
+//       'Date',
+//       'IN (Credit)',
+//       'OUT (Debit)',
+//       'Balance',
+//       'Transaction Note',
+//     ].join(',')
+//   );
+
+//   // ======================
+//   // BALANCE CALCULATION (ASC)
+//   // ======================
+//   const asc = [...txns].sort((a, b) => a.date - b.date);
+//   let running = 0;
+//   const balanceMap = new Map<number, number>();
+
+//   for (const t of asc) {
+//     if (t.type === 'credit') running += t.amount; // IN
+//     else running -= t.amount; // OUT
+
+//     balanceMap.set(t.id, running);
+//   }
+
+//   // ======================
+//   // EXPORT (DESC – latest first)
+//   // ======================
+//   const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//   for (const t of desc) {
+//     rows.push(
+//       [
+//         `"${personName}"`,
+//         `"${formatDateTime(t.date)}"`,
+//         t.type === 'credit' ? formatAmount(t.amount) : '',
+//         t.type === 'debit' ? formatAmount(t.amount) : '',
+//         formatAmount(balanceMap.get(t.id) ?? 0),
+//         `"${t.note ?? ''}"`,
+//       ].join(',')
+//     );
+//   }
+
+//   await writeAndShare(
+//     rows.join('\n'),
+//     `${personName.replace(/\s+/g, '_')}_ledger.csv`
+//   );
+// }
+
+
+//--------------3-------------
+
+//-----------4-------------
+// import * as FileSystem from 'expo-file-system/legacy';
+// import * as Sharing from 'expo-sharing';
+
+// import {
+//   getCompanies,
+//   getPeopleWithBalances,
+//   getPersonById,
+//   getTransactionsByPerson,
+// } from '@/database/service';
+
+// /* ============================
+//    CONSTANTS & HELPERS
+// ============================ */
+
+// // UTF-8 BOM → REQUIRED for Samsung / Excel
+// const BOM = '\uFEFF';
+
+// // Safe CSV escape
+// const csvEscape = (value: any): string => {
+//   if (value === null || value === undefined) return '';
+//   const str = String(value);
+
+//   if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+//     return `"${str.replace(/"/g, '""')}"`;
+//   }
+//   return str;
+// };
+
+// const formatAmount = (n?: number | null) =>
+//   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
+
+// const formatDateTime = (ts: number) =>
+//   new Date(ts * 1000).toLocaleString('en-IN', {
+//     day: '2-digit',
+//     month: 'short',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     hour12: true,
+//   });
+
+// async function writeAndShareCsv(filename: string, csv: string) {
+//   const uri = FileSystem.cacheDirectory + filename;
+
+//   await FileSystem.writeAsStringAsync(uri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+
+//   await Sharing.shareAsync(uri, {
+//     mimeType: 'text/csv',
+//     dialogTitle: 'Export Ledger CSV',
+//   });
+// }
+
+// /* ============================
+//    EXPORT COMPANY CSV
+// ============================ */
+
+// export async function exportCompanyCsv(companyId: number | null) {
+//   const companies = await getCompanies();
+
+//   const company =
+//     companyId === null
+//       ? { id: null, name: 'All Companies', note: '' }
+//       : companies.find(c => c.id === companyId);
+
+//   if (!company) return;
+
+//   const people = await getPeopleWithBalances(companyId);
+
+//   const headers = [
+//     'Company',
+//     'Company Note',
+//     'Person',
+//     'Date',
+//     'IN (Credit)',
+//     'OUT (Debit)',
+//     'Balance',
+//     'Transaction Note',
+//   ];
+
+//   const rows: string[] = [];
+
+//   for (const person of people) {
+//     const txns = await getTransactionsByPerson(person.id);
+//     if (!txns.length) continue;
+
+//     // 1️⃣ ASC → calculate running balance
+//     const asc = [...txns].sort((a, b) => a.date - b.date);
+//     let running = 0;
+//     const balanceMap = new Map<number, number>();
+
+//     for (const t of asc) {
+//       if (t.type === 'credit') running += t.amount;
+//       else running -= t.amount;
+
+//       balanceMap.set(t.id, running);
+//     }
+
+//     // 2️⃣ DESC → export latest first
+//     const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//     for (const t of desc) {
+//       rows.push(
+//         [
+//           csvEscape(company.name),
+//           csvEscape(company.note ?? ''),
+//           csvEscape(person.name),
+//           csvEscape(formatDateTime(t.date)),
+//           t.type === 'credit' ? formatAmount(t.amount) : '',
+//           t.type === 'debit' ? formatAmount(t.amount) : '',
+//           formatAmount(balanceMap.get(t.id)),
+//           csvEscape(t.note ?? ''),
+//         ].join(',')
+//       );
+//     }
+//   }
+
+//   const csv =
+//     BOM +
+//     headers.join(',') +
+//     '\n' +
+//     rows.join('\n');
+
+//   await writeAndShareCsv(
+//     `${company.name.replace(/\s+/g, '_')}_ledger.csv`,
+//     csv
+//   );
+// }
+
+// /* ============================
+//    EXPORT PERSON CSV
+// ============================ */
+
+// export async function exportPersonCsv(personId: number) {
+//   const person = await getPersonById(personId);
+//   if (!person) throw new Error('Person not found');
+
+//   const txns = await getTransactionsByPerson(personId);
+//   if (!txns.length) return;
+
+//   const headers = [
+//     'Person',
+//     'Date',
+//     'IN (Credit)',
+//     'OUT (Debit)',
+//     'Balance',
+//     'Transaction Note',
+//   ];
+
+//   // 1️⃣ ASC → running balance
+//   const asc = [...txns].sort((a, b) => a.date - b.date);
+//   let running = 0;
+//   const balanceMap = new Map<number, number>();
+
+//   for (const t of asc) {
+//     if (t.type === 'credit') running += t.amount;
+//     else running -= t.amount;
+
+//     balanceMap.set(t.id, running);
+//   }
+
+//   // 2️⃣ DESC → export
+//   const desc = [...txns].sort((a, b) => b.date - a.date);
+//   const rows: string[] = [];
+
+//   for (const t of desc) {
+//     rows.push(
+//       [
+//         csvEscape(person.name),
+//         csvEscape(formatDateTime(t.date)),
+//         t.type === 'credit' ? formatAmount(t.amount) : '',
+//         t.type === 'debit' ? formatAmount(t.amount) : '',
+//         formatAmount(balanceMap.get(t.id)),
+//         csvEscape(t.note ?? ''),
+//       ].join(',')
+//     );
+//   }
+
+//   const csv =
+//     BOM +
+//     headers.join(',') +
+//     '\n' +
+//     rows.join('\n');
+
+//   await writeAndShareCsv(
+//     `${person.name.replace(/\s+/g, '_')}_ledger.csv`,
+//     csv
+//   );
+// }
+
+//----------------4--------------
+
+//-----------5------------
+// import { Platform } from 'react-native';
+// import * as FileSystem from 'expo-file-system/legacy';
+// import * as Sharing from 'expo-sharing';
+
+// import {
+//   getCompanies,
+//   getPeopleWithBalances,
+//   getPersonById,
+//   getTransactionsByPerson,
+// } from '@/database/service';
+
+// /* ============================
+//    HELPERS
+// ============================ */
+
+// const formatAmount = (n?: number | null) =>
+//   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
+
+// const formatDateTime = (ts: number) =>
+//   new Date(ts * 1000).toLocaleString('en-IN', {
+//     day: '2-digit',
+//     month: 'short',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     hour12: true,
+//   });
+
+// /* ============================
+//    SAVE TO DEVICE (ANDROID)
+// ============================ */
+
+// // async function saveCsvToDevice(filename: string, csv: string) {
+// //   if (Platform.OS !== 'android') {
+// //     throw new Error('Download is supported only on Android');
+// //   }
+
+// //   const permission =
+// //     await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+// //   if (!permission.granted) {
+// //     throw new Error('Permission denied');
+// //   }
+
+// //   const fileUri =
+// //     await FileSystem.StorageAccessFramework.createFileAsync(
+// //       permission.directoryUri,
+// //       filename,
+// //       'text/csv'
+// //     );
+
+// //   await FileSystem.writeAsStringAsync(fileUri, csv, {
+// //     encoding: FileSystem.EncodingType.UTF8,
+// //   });
+// // }
+
+// async function saveCsvToDevice(filename: string, csv: string) {
+//   if (Platform.OS !== 'android') return;
+
+//   const permission =
+//     await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+//   // 🚫 User cancelled – do nothing
+//   if (!permission.granted) {
+//     console.log('User cancelled folder selection');
+//     return;
+//   }
+
+//   const fileUri =
+//     await FileSystem.StorageAccessFramework.createFileAsync(
+//       permission.directoryUri,
+//       filename,
+//       'text/csv'
+//     );
+
+//   await FileSystem.writeAsStringAsync(fileUri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+// }
+
+
+// /* ============================
+//    SHARE CSV
+// ============================ */
+
+// async function shareCsv(filename: string, csv: string) {
+//   const uri = FileSystem.cacheDirectory + filename;
+
+//   await FileSystem.writeAsStringAsync(uri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+
+//   await Sharing.shareAsync(uri, {
+//     mimeType: 'text/csv',
+//     dialogTitle: 'Export Ledger CSV',
+//   });
+// }
+
+// /* ============================
+//    EXPORT COMPANY CSV
+// ============================ */
+
+// export async function exportCompanyCsv(
+//   companyId: number | null,
+//   mode: 'download' | 'share' = 'download'
+// ) {
+//   const companies = await getCompanies();
+
+//   const company =
+//     companyId === null
+//       ? { id: null, name: 'All Companies', note: '' }
+//       : companies.find(c => c.id === companyId);
+
+//   if (!company) return;
+
+//   const people = await getPeopleWithBalances(companyId);
+//   const rows: string[] = [];
+
+//   // CSV HEADER
+//   rows.push(
+//     [
+//       'Company',
+//       'Company Note',
+//       'Person',
+//       'Date',
+//       'IN (Credit)',
+//       'OUT (Debit)',
+//       'Balance',
+//       'Transaction Note',
+//     ].join(',')
+//   );
+
+//   for (const person of people) {
+//     const txns = await getTransactionsByPerson(person.id);
+//     if (!txns.length) continue;
+
+//     // Balance calculation (ASC)
+//     const asc = [...txns].sort((a, b) => a.date - b.date);
+//     let running = 0;
+//     const balanceMap = new Map<number, number>();
+
+//     for (const t of asc) {
+//       running += t.type === 'credit' ? t.amount : -t.amount;
+//       balanceMap.set(t.id, running);
+//     }
+
+//     // Export (DESC – latest first)
+//     const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//     for (const t of desc) {
+//       rows.push(
+//         [
+//           `"${company.name}"`,
+//           `"${company.note ?? ''}"`,
+//           `"${person.name}"`,
+//           `"${formatDateTime(t.date)}"`,
+//           t.type === 'credit' ? formatAmount(t.amount) : '',
+//           t.type === 'debit' ? formatAmount(t.amount) : '',
+//           formatAmount(balanceMap.get(t.id)),
+//           `"${t.note ?? ''}"`,
+//         ].join(',')
+//       );
+//     }
+//   }
+
+//   // UTF-8 BOM fixes Samsung / Excel issues
+//   const csv = '\uFEFF' + rows.join('\n');
+//   const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+//   if (mode === 'download') {
+//     await saveCsvToDevice(filename, csv);
+//   } else {
+//     await shareCsv(filename, csv);
+//   }
+// }
+
+// /* ============================
+//    EXPORT PERSON CSV
+// ============================ */
+
+// export async function exportPersonCsv(
+//   personId: number,
+//   mode: 'download' | 'share' = 'download'
+// ) {
+//   const person = await getPersonById(personId);
+//   if (!person) return;
+
+//   const txns = await getTransactionsByPerson(personId);
+//   if (!txns.length) return;
+
+//   const rows: string[] = [];
+
+//   // CSV HEADER
+//   rows.push(
+//     [
+//       'Person',
+//       'Date',
+//       'IN (Credit)',
+//       'OUT (Debit)',
+//       'Balance',
+//       'Transaction Note',
+//     ].join(',')
+//   );
+
+//   // Balance calculation (ASC)
+//   const asc = [...txns].sort((a, b) => a.date - b.date);
+//   let running = 0;
+//   const balanceMap = new Map<number, number>();
+
+//   for (const t of asc) {
+//     running += t.type === 'credit' ? t.amount : -t.amount;
+//     balanceMap.set(t.id, running);
+//   }
+
+//   // Export (DESC – latest first)
+//   const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//   for (const t of desc) {
+//     rows.push(
+//       [
+//         `"${person.name}"`,
+//         `"${formatDateTime(t.date)}"`,
+//         t.type === 'credit' ? formatAmount(t.amount) : '',
+//         t.type === 'debit' ? formatAmount(t.amount) : '',
+//         formatAmount(balanceMap.get(t.id)),
+//         `"${t.note ?? ''}"`,
+//       ].join(',')
+//     );
+//   }
+
+//   const csv = '\uFEFF' + rows.join('\n');
+//   const filename = `${person.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+//   if (mode === 'download') {
+//     await saveCsvToDevice(filename, csv);
+//   } else {
+//     await shareCsv(filename, csv);
+//   }
+// }
+
+//--------------5------------
+
+//----------6--------------
+// import { Platform, Alert } from 'react-native';
+// import * as FileSystem from 'expo-file-system/legacy';
+// import * as Sharing from 'expo-sharing';
+
+// import {
+//   getCompanies,
+//   getPeopleWithBalances,
+//   getPersonById,
+//   getTransactionsByPerson,
+// } from '@/database/service';
+
+// /* ============================
+//    HELPERS
+// ============================ */
+
+// const formatAmount = (n?: number | null) =>
+//   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
+
+// const formatDateTime = (ts: number) =>
+//   new Date(ts * 1000).toLocaleString('en-IN', {
+//     day: '2-digit',
+//     month: 'short',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     hour12: true,
+//   });
+
+// /* ============================
+//    SHARE CSV
+// ============================ */
+
+// async function shareCsv(filename: string, csv: string) {
+//   const uri = FileSystem.cacheDirectory + filename;
+
+//   await FileSystem.writeAsStringAsync(uri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+
+//   await Sharing.shareAsync(uri, {
+//     mimeType: 'text/csv',
+//     dialogTitle: 'Share Ledger CSV',
+//   });
+// }
+
+// /* ============================
+//    DOWNLOAD CSV (ANDROID SAF)
+// ============================ */
+
+// async function downloadCsv(filename: string, csv: string) {
+//   if (Platform.OS !== 'android') {
+//     // iOS → fallback to share
+//     return shareCsv(filename, csv);
+//   }
+
+//   const permission =
+//     await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+//   // 🚫 user cancelled
+//   if (!permission.granted) return;
+
+//   const fileUri =
+//     await FileSystem.StorageAccessFramework.createFileAsync(
+//       permission.directoryUri,
+//       filename,
+//       'text/csv'
+//     );
+
+//   await FileSystem.writeAsStringAsync(fileUri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+// }
+
+// /* ============================
+//    EXPORT COMPANY CSV
+// ============================ */
+
+// export async function exportCompanyCsv(companyId: number | null) {
+//   const companies = await getCompanies();
+//   const company =
+//     companyId === null
+//       ? { id: null, name: 'All_Companies', note: '' }
+//       : companies.find(c => c.id === companyId);
+
+//   if (!company) return;
+
+//   const people = await getPeopleWithBalances(companyId);
+//   const rows: string[] = [];
+
+//   // HEADER
+//   rows.push(
+//     [
+//       'Company',
+//       'Company Note',
+//       'Person',
+//       'Date',
+//       'IN (Credit)',
+//       'OUT (Debit)',
+//       'Balance',
+//       'Transaction Note',
+//     ].join(',')
+//   );
+
+//   for (const person of people) {
+//     const txns = await getTransactionsByPerson(person.id);
+//     if (!txns.length) continue;
+
+//     // balance calc ASC
+//     const asc = [...txns].sort((a, b) => a.date - b.date);
+//     let running = 0;
+//     const balanceMap = new Map<number, number>();
+
+//     for (const t of asc) {
+//       running += t.type === 'credit' ? t.amount : -t.amount;
+//       balanceMap.set(t.id, running);
+//     }
+
+//     // export DESC
+//     const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//     for (const t of desc) {
+//       rows.push(
+//         [
+//           `"${company.name}"`,
+//           `"${company.note ?? ''}"`,
+//           `"${person.name}"`,
+//           `"${formatDateTime(t.date)}"`,
+//           t.type === 'credit' ? formatAmount(t.amount) : '',
+//           t.type === 'debit' ? formatAmount(t.amount) : '',
+//           formatAmount(balanceMap.get(t.id)),
+//           `"${t.note ?? ''}"`,
+//         ].join(',')
+//       );
+//     }
+//   }
+
+//   const csv = rows.join('\n');
+//   const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+//   // 🔹 Ask user what they want
+//   Alert.alert(
+//     'Export Company Data',
+//     'Choose how you want to export the CSV',
+//     [
+//       {
+//         text: 'Download',
+//         onPress: () => downloadCsv(filename, csv),
+//       },
+//       {
+//         text: 'Share',
+//         onPress: () => shareCsv(filename, csv),
+//       },
+//       { text: 'Cancel', style: 'cancel' },
+//     ]
+//   );
+// }
+
+// /* ============================
+//    EXPORT PERSON CSV (SHARE ONLY)
+// ============================ */
+
+// export async function exportPersonCsv(personId: number) {
+//   const person = await getPersonById(personId);
+//   if (!person) return;
+
+//   const txns = await getTransactionsByPerson(personId);
+//   if (!txns.length) return;
+
+//   const rows: string[] = [];
+
+//   rows.push(
+//     ['Person', 'Date', 'IN (Credit)', 'OUT (Debit)', 'Balance', 'Transaction Note'].join(',')
+//   );
+
+//   const asc = [...txns].sort((a, b) => a.date - b.date);
+//   let running = 0;
+//   const balanceMap = new Map<number, number>();
+
+//   for (const t of asc) {
+//     running += t.type === 'credit' ? t.amount : -t.amount;
+//     balanceMap.set(t.id, running);
+//   }
+
+//   const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//   for (const t of desc) {
+//     rows.push(
+//       [
+//         `"${person.name}"`,
+//         `"${formatDateTime(t.date)}"`,
+//         t.type === 'credit' ? formatAmount(t.amount) : '',
+//         t.type === 'debit' ? formatAmount(t.amount) : '',
+//         formatAmount(balanceMap.get(t.id)),
+//         `"${t.note ?? ''}"`,
+//       ].join(',')
+//     );
+//   }
+
+//   await shareCsv(
+//     `${person.name.replace(/\s+/g, '_')}_ledger.csv`,
+//     rows.join('\n')
+//   );
+// }
+
+//--------------6------------
+
+//-------7----------------
+import { Platform, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
@@ -251,7 +1076,7 @@ import {
    HELPERS
 ============================ */
 
-const formatAmount = (n: number | null | undefined) =>
+const formatAmount = (n?: number | null) =>
   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
 
 const formatDateTime = (ts: number) =>
@@ -264,12 +1089,47 @@ const formatDateTime = (ts: number) =>
     hour12: true,
   });
 
-async function writeAndShare(csv: string, filename: string) {
-  const path = FileSystem.cacheDirectory + filename;
-  await FileSystem.writeAsStringAsync(path, csv);
-  await Sharing.shareAsync(path, {
+/* ============================
+   SHARE CSV
+============================ */
+
+async function shareCsv(filename: string, csv: string) {
+  const uri = FileSystem.cacheDirectory + filename;
+
+  await FileSystem.writeAsStringAsync(uri, csv, {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+
+  await Sharing.shareAsync(uri, {
     mimeType: 'text/csv',
-    dialogTitle: 'Export CSV',
+    dialogTitle: 'Share Ledger CSV',
+  });
+}
+
+/* ============================
+   DOWNLOAD CSV (ANDROID SAF)
+============================ */
+
+async function downloadCsv(filename: string, csv: string) {
+  if (Platform.OS !== 'android') {
+    // iOS fallback → share
+    return shareCsv(filename, csv);
+  }
+
+  const permission =
+    await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+  if (!permission.granted) return;
+
+  const fileUri =
+    await FileSystem.StorageAccessFramework.createFileAsync(
+      permission.directoryUri,
+      filename,
+      'text/csv'
+    );
+
+  await FileSystem.writeAsStringAsync(fileUri, csv, {
+    encoding: FileSystem.EncodingType.UTF8,
   });
 }
 
@@ -281,16 +1141,14 @@ export async function exportCompanyCsv(companyId: number | null) {
   const companies = await getCompanies();
   const company =
     companyId === null
-      ? { id: null, name: 'All Companies', note: '' }
+      ? { id: null, name: 'All_Companies', note: '' }
       : companies.find(c => c.id === companyId);
 
   if (!company) return;
 
   const people = await getPeopleWithBalances(companyId);
-
   const rows: string[] = [];
 
-  // HEADER
   rows.push(
     [
       'Company',
@@ -306,22 +1164,17 @@ export async function exportCompanyCsv(companyId: number | null) {
 
   for (const person of people) {
     const txns = await getTransactionsByPerson(person.id);
-
     if (!txns.length) continue;
 
-    // 🔹 1. ASC for balance calculation
     const asc = [...txns].sort((a, b) => a.date - b.date);
-
     let running = 0;
     const balanceMap = new Map<number, number>();
 
     for (const t of asc) {
-      if (t.type === 'credit') running += t.amount; // IN
-      else running -= t.amount; // OUT
+      running += t.type === 'credit' ? t.amount : -t.amount;
       balanceMap.set(t.id, running);
     }
 
-    // 🔹 2. DESC for export (latest first)
     const desc = [...txns].sort((a, b) => b.date - a.date);
 
     for (const t of desc) {
@@ -340,9 +1193,17 @@ export async function exportCompanyCsv(companyId: number | null) {
     }
   }
 
-  await writeAndShare(
-    rows.join('\n'),
-    `${company.name.replace(/\s+/g, '_')}_ledger.csv`
+  const csv = rows.join('\n');
+  const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+  Alert.alert(
+    'Export Company Data',
+    'Choose how you want to export the CSV',
+    [
+      { text: 'Download', onPress: () => downloadCsv(filename, csv) },
+      { text: 'Share', onPress: () => shareCsv(filename, csv) },
+      { text: 'Cancel', style: 'cancel' },
+    ]
   );
 }
 
@@ -352,66 +1213,53 @@ export async function exportCompanyCsv(companyId: number | null) {
 
 export async function exportPersonCsv(personId: number) {
   const person = await getPersonById(personId);
-  if (!person) throw new Error('Person not found');
+  if (!person) return;
 
   const txns = await getTransactionsByPerson(personId);
   if (!txns.length) return;
 
-  const personName = person.name;
-
   const rows: string[] = [];
 
-  // ======================
-  // CSV HEADER
-  // ======================
   rows.push(
-    [
-      'Person',
-      'Date',
-      'IN (Credit)',
-      'OUT (Debit)',
-      'Balance',
-      'Transaction Note',
-    ].join(',')
+    ['Person', 'Date', 'IN (Credit)', 'OUT (Debit)', 'Balance', 'Transaction Note'].join(',')
   );
 
-  // ======================
-  // BALANCE CALCULATION (ASC)
-  // ======================
   const asc = [...txns].sort((a, b) => a.date - b.date);
   let running = 0;
   const balanceMap = new Map<number, number>();
 
   for (const t of asc) {
-    if (t.type === 'credit') running += t.amount; // IN
-    else running -= t.amount; // OUT
-
+    running += t.type === 'credit' ? t.amount : -t.amount;
     balanceMap.set(t.id, running);
   }
 
-  // ======================
-  // EXPORT (DESC – latest first)
-  // ======================
   const desc = [...txns].sort((a, b) => b.date - a.date);
 
   for (const t of desc) {
     rows.push(
       [
-        `"${personName}"`,
+        `"${person.name}"`,
         `"${formatDateTime(t.date)}"`,
         t.type === 'credit' ? formatAmount(t.amount) : '',
         t.type === 'debit' ? formatAmount(t.amount) : '',
-        formatAmount(balanceMap.get(t.id) ?? 0),
+        formatAmount(balanceMap.get(t.id)),
         `"${t.note ?? ''}"`,
       ].join(',')
     );
   }
 
-  await writeAndShare(
-    rows.join('\n'),
-    `${personName.replace(/\s+/g, '_')}_ledger.csv`
+  const csv = rows.join('\n');
+  const filename = `${person.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+  Alert.alert(
+    'Export Person Data',
+    'Choose how you want to export the CSV',
+    [
+      { text: 'Download', onPress: () => downloadCsv(filename, csv) },
+      { text: 'Share', onPress: () => shareCsv(filename, csv) },
+      { text: 'Cancel', style: 'cancel' },
+    ]
   );
 }
 
-
-//--------------3-------------
+//---------------7-------------

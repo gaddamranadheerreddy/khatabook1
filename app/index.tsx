@@ -1683,6 +1683,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Pressable,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import {
@@ -1883,7 +1884,7 @@ export default function HomeScreen() {
           style={styles.overlay}
           onPress={() => setCompanySheetOpen(false)}
         >
-          <View style={styles.sheet}>
+          {/* <View style={styles.sheet}>
             <TouchableOpacity
               style={styles.sheetItem}
               onPress={() => {
@@ -1913,7 +1914,47 @@ export default function HomeScreen() {
                 <Text>{c.name}</Text>
               </TouchableOpacity>
             ))}
+          </View> */}
+
+          <View style={styles.sheet}>
+            {/* ALL COMPANIES */}
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => {
+                setSelectedCompanyId(null);
+                setCompanySheetOpen(false);
+              }}
+            >
+              <Text>All Companies</Text>
+            </TouchableOpacity>
+
+            {/* SCROLLABLE COMPANY LIST */}
+            <ScrollView
+              style={styles.companyList}
+              showsVerticalScrollIndicator={true}
+            >
+              {companies.map(c => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={styles.sheetItem}
+                  onPress={() => {
+                    setSelectedCompanyId(c.id);
+                    setCompanySheetOpen(false);
+                  }}
+                  onLongPress={() => {
+                    setCompanySheetOpen(false);
+                    router.push({
+                      pathname: '/manage-company',
+                      params: { companyId: c.id.toString() },
+                    });
+                  }}
+                >
+                  <Text>{c.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
+
         </Pressable>
       )}
 
@@ -2006,15 +2047,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     inset: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   sheet: {
     backgroundColor: '#FFF',
     padding: 16,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    marginHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 8,
+    elevation: 6,
+    // borderTopLeftRadius: 12,
+    // borderTopRightRadius: 12,
   },
-  sheetItem: { paddingVertical: 14 },
+  sheetItem: { paddingVertical: 14,
+    paddingHorizontal: 12,
+   },
+    companyList: {
+    maxHeight: 220, // 👈 shows ~4–5 companies
+  },
 
   companyNoteCard: {
     backgroundColor: '#FFF',

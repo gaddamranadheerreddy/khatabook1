@@ -413,6 +413,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { TrendingUp, TrendingDown, Calendar } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { addTransaction, getPersonById } from '@/database/service';
 import { Person } from '@/database/types';
@@ -430,6 +431,7 @@ export default function AddTransactionScreen() {
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date());
   const [saving, setSaving] = useState(false);
+  const insets = useSafeAreaInsets();
 
   /* ======================
      LOAD PERSON
@@ -595,7 +597,7 @@ export default function AddTransactionScreen() {
         </View>
 
         {/* DATE */}
-        <View style={styles.group}>
+        {/* <View style={styles.group}>
           <Text style={styles.label}>Date</Text>
           <View style={styles.dateRow}>
             <TouchableOpacity
@@ -622,11 +624,62 @@ export default function AddTransactionScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
+
+        {/* DATE */}
+            <View style={styles.group}>
+            <Text style={styles.label}>Date</Text>
+
+            <View style={styles.dateRow}>
+                <TouchableOpacity
+                style={styles.dateBtn}
+                onPress={() => shiftDate(-1)}
+                activeOpacity={0.8}
+                >
+                <Text style={styles.dateBtnText} allowFontScaling={false}>
+                    Yesterday
+                </Text>
+                </TouchableOpacity>
+
+                <View style={styles.dateCenter}>
+                <Calendar size={16} color="#6B7280" />
+                <Text
+                    style={styles.dateText}
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                >
+                    {formatDate(date)}
+                </Text>
+                </View>
+
+                <TouchableOpacity
+                style={[
+                    styles.dateBtn,
+                    date >= new Date() && styles.dateBtnDisabled,
+                ]}
+                onPress={() => shiftDate(1)}
+                disabled={date >= new Date()}
+                activeOpacity={0.8}
+                >
+                <Text
+                    style={[
+                    styles.dateBtnText,
+                    date >= new Date() && styles.dateBtnTextDisabled,
+                    ]}
+                    allowFontScaling={false}
+                >
+                    Tomorrow
+                </Text>
+                </TouchableOpacity>
+            </View>
+            </View>
+
 
         {/* SAVE */}
         <TouchableOpacity
-          style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+          style={[styles.saveBtn,
+            { bottom: insets.bottom + 16 },
+             saving && { opacity: 0.6 }]}
           onPress={handleSave}
           disabled={saving}
         >
@@ -703,29 +756,29 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
 
-  dateRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  dateBtn: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-  },
-  dateCenter: {
-    flex: 2,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  dateText: { fontWeight: '600' },
+//   dateRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+//   dateBtn: {
+//     flex: 1,
+//     backgroundColor: '#FFF',
+//     padding: 12,
+//     borderRadius: 8,
+//     borderWidth: 1,
+//     borderColor: '#D1D5DB',
+//     alignItems: 'center',
+//   },
+//   dateCenter: {
+//     flex: 2,
+//     flexDirection: 'row',
+//     justifyContent: 'center',
+//     gap: 6,
+//     alignItems: 'center',
+//     backgroundColor: '#FFF',
+//     padding: 12,
+//     borderRadius: 8,
+//     borderWidth: 1,
+//     borderColor: '#D1D5DB',
+//   },
+//   dateText: { fontWeight: '600' },
 
   saveBtn: {
     backgroundColor: '#007AFF',
@@ -734,6 +787,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveText: { color: '#FFF', fontWeight: '700', fontSize: 16 },
+
+
+  dateRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+
+dateBtn: {
+  flex: 1,
+  height: 42,              // 🔑 fixed height
+  backgroundColor: '#FFF',
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+dateBtnDisabled: {
+  backgroundColor: '#F9FAFB',
+},
+
+dateBtnText: {
+  fontSize: 13,            // 🔑 explicit font size
+  fontWeight: '500',
+  color: '#111827',
+},
+
+dateBtnTextDisabled: {
+  color: '#D1D5DB',
+},
+
+dateCenter: {
+  flex: 1.4,               // 🔑 reduce from 2 → prevents squeezing
+  height: 42,              // 🔑 same height
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  backgroundColor: '#FFF',
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+},
+
+dateText: {
+  fontSize: 13,
+  fontWeight: '600',
+  color: '#111827',
+},
+
 });
 
 //---------------------2---------------

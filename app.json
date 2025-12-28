@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "My Khata",
+    "slug": "my-khata",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.gaddam.mykhata",
+      "versionCode": 1
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "adf15b29-f6ae-446d-a662-dc781ae78afc"
+      }
+    },
+    "owner": "ranadheercoder"
+  }
+}

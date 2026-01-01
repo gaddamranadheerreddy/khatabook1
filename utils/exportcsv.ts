@@ -1570,6 +1570,67 @@ async function downloadCsv(filename: string, content: string) {
    EXPORT COMPANY CSV
 ============================ */
 
+// export async function exportCompanyCsv(companyId: number | null) {
+//   const companies = await getCompanies();
+
+//   const company =
+//     companyId === null
+//       ? { id: null, name: 'All Companies', note: '' }
+//       : companies.find(c => c.id === companyId);
+
+//   if (!company) return;
+
+//   const people = await getPeopleWithBalances(companyId);
+//   const rows: string[] = [];
+
+//   rows.push([
+//     'Company',
+//     'Company Note',
+//     'Person',
+//     'Date',
+//     'IN (Credit)',
+//     'OUT (Debit)',
+//     'Balance',
+//     'Transaction Note',
+//   ].map(csv).join(','));
+
+//   for (const person of people) {
+//     const txns = await getTransactionsByPerson(person.id);
+//     if (!txns.length) continue;
+
+//     const asc = [...txns].sort((a, b) => a.date - b.date);
+//     let balance = 0;
+
+//     for (const t of asc) {
+//       balance += t.type === 'credit' ? t.amount : -t.amount;
+
+//       rows.push([
+//         csv(company.name),
+//         csv(company.note ?? ''),
+//         csv(person.name),
+//         csv(formatDateTime(t.date)),
+//         t.type === 'credit' ? csv(formatAmount(t.amount)) : csv(''),
+//         t.type === 'debit' ? csv(formatAmount(t.amount)) : csv(''),
+//         csv(formatAmount(balance)),
+//         csv(t.note ?? ''),
+//       ].join(','));
+//     }
+//   }
+
+//   const csvContent = rows.join('\n');
+//   const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+//   Alert.alert(
+//     'Export Company Ledger',
+//     'Choose export method',
+//     [
+//       { text: 'Download', onPress: () => downloadCsv(filename, csvContent) },
+//       { text: 'Share', onPress: () => shareCsv(filename, csvContent) },
+//       { text: 'Cancel', style: 'cancel' },
+//     ]
+//   );
+// }
+
 export async function exportCompanyCsv(companyId: number | null) {
   const companies = await getCompanies();
 
@@ -1581,6 +1642,34 @@ export async function exportCompanyCsv(companyId: number | null) {
   if (!company) return;
 
   const people = await getPeopleWithBalances(companyId);
+
+  // 1️⃣ collect ALL transactions
+  const allRows: {
+    person: string;
+    date: number;
+    type: 'credit' | 'debit';
+    amount: number;
+    note?: string | null;
+  }[] = [];
+
+  for (const p of people) {
+    const txns = await getTransactionsByPerson(p.id);
+    for (const t of txns) {
+      allRows.push({
+        person: p.name,
+        date: t.date,
+        type: t.type,
+        amount: t.amount,
+        note: t.note,
+      });
+    }
+  }
+
+  if (!allRows.length) return;
+
+  // 2️⃣ sort by date ASC
+  allRows.sort((a, b) => a.date - b.date);
+
   const rows: string[] = [];
 
   rows.push([
@@ -1594,27 +1683,22 @@ export async function exportCompanyCsv(companyId: number | null) {
     'Transaction Note',
   ].map(csv).join(','));
 
-  for (const person of people) {
-    const txns = await getTransactionsByPerson(person.id);
-    if (!txns.length) continue;
+  // 3️⃣ ONE company-wide balance
+  let companyBalance = 0;
 
-    const asc = [...txns].sort((a, b) => a.date - b.date);
-    let balance = 0;
+  for (const r of allRows) {
+    companyBalance += r.type === 'credit' ? r.amount : -r.amount;
 
-    for (const t of asc) {
-      balance += t.type === 'credit' ? t.amount : -t.amount;
-
-      rows.push([
-        csv(company.name),
-        csv(company.note ?? ''),
-        csv(person.name),
-        csv(formatDateTime(t.date)),
-        t.type === 'credit' ? csv(formatAmount(t.amount)) : csv(''),
-        t.type === 'debit' ? csv(formatAmount(t.amount)) : csv(''),
-        csv(formatAmount(balance)),
-        csv(t.note ?? ''),
-      ].join(','));
-    }
+    rows.push([
+      csv(company.name),
+      csv(company.note ?? ''),
+      csv(r.person),
+      csv(formatDateTime(r.date)),
+      r.type === 'credit' ? csv(formatAmount(r.amount)) : csv(''),
+      r.type === 'debit' ? csv(formatAmount(r.amount)) : csv(''),
+      csv(formatAmount(companyBalance)),
+      csv(r.note ?? ''),
+    ].join(','));
   }
 
   const csvContent = rows.join('\n');
@@ -1630,6 +1714,7 @@ export async function exportCompanyCsv(companyId: number | null) {
     ]
   );
 }
+
 
 /* ============================
    EXPORT PERSON CSV

@@ -1061,6 +1061,210 @@
 //--------------6------------
 
 //-------7----------------
+// import { Platform, Alert } from 'react-native';
+// import * as FileSystem from 'expo-file-system/legacy';
+// import * as Sharing from 'expo-sharing';
+
+// import {
+//   getCompanies,
+//   getPeopleWithBalances,
+//   getPersonById,
+//   getTransactionsByPerson,
+// } from '@/database/service';
+
+// /* ============================
+//    HELPERS
+// ============================ */
+
+// const formatAmount = (n?: number | null) =>
+//   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
+
+// const formatDateTime = (ts: number) =>
+//   new Date(ts * 1000).toLocaleString('en-IN', {
+//     day: '2-digit',
+//     month: 'short',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     hour12: true,
+//   });
+
+// /* ============================
+//    SHARE CSV
+// ============================ */
+
+// async function shareCsv(filename: string, csv: string) {
+//   const uri = FileSystem.cacheDirectory + filename;
+
+//   await FileSystem.writeAsStringAsync(uri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+
+//   await Sharing.shareAsync(uri, {
+//     mimeType: 'text/csv',
+//     dialogTitle: 'Share Ledger CSV',
+//   });
+// }
+
+// /* ============================
+//    DOWNLOAD CSV (ANDROID SAF)
+// ============================ */
+
+// async function downloadCsv(filename: string, csv: string) {
+//   if (Platform.OS !== 'android') {
+//     // iOS fallback → share
+//     return shareCsv(filename, csv);
+//   }
+
+//   const permission =
+//     await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+//   if (!permission.granted) return;
+
+//   const fileUri =
+//     await FileSystem.StorageAccessFramework.createFileAsync(
+//       permission.directoryUri,
+//       filename,
+//       'text/csv'
+//     );
+
+//   await FileSystem.writeAsStringAsync(fileUri, csv, {
+//     encoding: FileSystem.EncodingType.UTF8,
+//   });
+// }
+
+// /* ============================
+//    EXPORT COMPANY CSV
+// ============================ */
+
+// export async function exportCompanyCsv(companyId: number | null) {
+//   const companies = await getCompanies();
+//   const company =
+//     companyId === null
+//       ? { id: null, name: 'All_Companies', note: '' }
+//       : companies.find(c => c.id === companyId);
+
+//   if (!company) return;
+
+//   const people = await getPeopleWithBalances(companyId);
+//   const rows: string[] = [];
+
+//   rows.push(
+//     [
+//       'Company',
+//       'Company Note',
+//       'Person',
+//       'Date',
+//       'IN (Credit)',
+//       'OUT (Debit)',
+//       'Balance',
+//       'Transaction Note',
+//     ].join(',')
+//   );
+
+//   for (const person of people) {
+//     const txns = await getTransactionsByPerson(person.id);
+//     if (!txns.length) continue;
+
+//     const asc = [...txns].sort((a, b) => a.date - b.date);
+//     let running = 0;
+//     const balanceMap = new Map<number, number>();
+
+//     for (const t of asc) {
+//       running += t.type === 'credit' ? t.amount : -t.amount;
+//       balanceMap.set(t.id, running);
+//     }
+
+//     const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//     for (const t of desc) {
+//       rows.push(
+//         [
+//           `"${company.name}"`,
+//           `"${company.note ?? ''}"`,
+//           `"${person.name}"`,
+//           `"${formatDateTime(t.date)}"`,
+//           t.type === 'credit' ? formatAmount(t.amount) : '',
+//           t.type === 'debit' ? formatAmount(t.amount) : '',
+//           formatAmount(balanceMap.get(t.id)),
+//           `"${t.note ?? ''}"`,
+//         ].join(',')
+//       );
+//     }
+//   }
+
+//   const csv = rows.join('\n');
+//   const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+//   Alert.alert(
+//     'Export Company Data',
+//     'Choose how you want to export the CSV',
+//     [
+//       { text: 'Download', onPress: () => downloadCsv(filename, csv) },
+//       { text: 'Share', onPress: () => shareCsv(filename, csv) },
+//       { text: 'Cancel', style: 'cancel' },
+//     ]
+//   );
+// }
+
+// /* ============================
+//    EXPORT PERSON CSV
+// ============================ */
+
+// export async function exportPersonCsv(personId: number) {
+//   const person = await getPersonById(personId);
+//   if (!person) return;
+
+//   const txns = await getTransactionsByPerson(personId);
+//   if (!txns.length) return;
+
+//   const rows: string[] = [];
+
+//   rows.push(
+//     ['Person', 'Date', 'IN (Credit)', 'OUT (Debit)', 'Balance', 'Transaction Note'].join(',')
+//   );
+
+//   const asc = [...txns].sort((a, b) => a.date - b.date);
+//   let running = 0;
+//   const balanceMap = new Map<number, number>();
+
+//   for (const t of asc) {
+//     running += t.type === 'credit' ? t.amount : -t.amount;
+//     balanceMap.set(t.id, running);
+//   }
+
+//   const desc = [...txns].sort((a, b) => b.date - a.date);
+
+//   for (const t of desc) {
+//     rows.push(
+//       [
+//         `"${person.name}"`,
+//         `"${formatDateTime(t.date)}"`,
+//         t.type === 'credit' ? formatAmount(t.amount) : '',
+//         t.type === 'debit' ? formatAmount(t.amount) : '',
+//         formatAmount(balanceMap.get(t.id)),
+//         `"${t.note ?? ''}"`,
+//       ].join(',')
+//     );
+//   }
+
+//   const csv = rows.join('\n');
+//   const filename = `${person.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+//   Alert.alert(
+//     'Export Person Data',
+//     'Choose how you want to export the CSV',
+//     [
+//       { text: 'Download', onPress: () => downloadCsv(filename, csv) },
+//       { text: 'Share', onPress: () => shareCsv(filename, csv) },
+//       { text: 'Cancel', style: 'cancel' },
+//     ]
+//   );
+// }
+
+//---------------7-------------
+
+//-----------8--------------
 import { Platform, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -1073,8 +1277,25 @@ import {
 } from '@/database/service';
 
 /* ============================
-   HELPERS
+   CSV HELPERS (IMPORTANT)
 ============================ */
+
+/**
+ * Safely formats any value for CSV.
+ * - Wraps in quotes if it contains comma / newline / quotes
+ * - Escapes quotes correctly
+ */
+function csvValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+
+  const str = String(value);
+
+  if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+
+  return str;
+}
 
 const formatAmount = (n?: number | null) =>
   n === null || n === undefined ? '' : n.toLocaleString('en-IN');
@@ -1112,7 +1333,6 @@ async function shareCsv(filename: string, csv: string) {
 
 async function downloadCsv(filename: string, csv: string) {
   if (Platform.OS !== 'android') {
-    // iOS fallback → share
     return shareCsv(filename, csv);
   }
 
@@ -1139,9 +1359,10 @@ async function downloadCsv(filename: string, csv: string) {
 
 export async function exportCompanyCsv(companyId: number | null) {
   const companies = await getCompanies();
+
   const company =
     companyId === null
-      ? { id: null, name: 'All_Companies', note: '' }
+      ? { id: null, name: 'All Companies', note: '' }
       : companies.find(c => c.id === companyId);
 
   if (!company) return;
@@ -1149,6 +1370,7 @@ export async function exportCompanyCsv(companyId: number | null) {
   const people = await getPeopleWithBalances(companyId);
   const rows: string[] = [];
 
+  // Header
   rows.push(
     [
       'Company',
@@ -1166,6 +1388,7 @@ export async function exportCompanyCsv(companyId: number | null) {
     const txns = await getTransactionsByPerson(person.id);
     if (!txns.length) continue;
 
+    // Calculate running balance (ASC)
     const asc = [...txns].sort((a, b) => a.date - b.date);
     let running = 0;
     const balanceMap = new Map<number, number>();
@@ -1175,19 +1398,20 @@ export async function exportCompanyCsv(companyId: number | null) {
       balanceMap.set(t.id, running);
     }
 
+    // Export DESC (latest first)
     const desc = [...txns].sort((a, b) => b.date - a.date);
 
     for (const t of desc) {
       rows.push(
         [
-          `"${company.name}"`,
-          `"${company.note ?? ''}"`,
-          `"${person.name}"`,
-          `"${formatDateTime(t.date)}"`,
-          t.type === 'credit' ? formatAmount(t.amount) : '',
-          t.type === 'debit' ? formatAmount(t.amount) : '',
-          formatAmount(balanceMap.get(t.id)),
-          `"${t.note ?? ''}"`,
+          csvValue(company.name),
+          csvValue(company.note ?? ''),
+          csvValue(person.name),
+          csvValue(formatDateTime(t.date)),
+          csvValue(t.type === 'credit' ? formatAmount(t.amount) : ''),
+          csvValue(t.type === 'debit' ? formatAmount(t.amount) : ''),
+          csvValue(formatAmount(balanceMap.get(t.id))),
+          csvValue(t.note ?? ''),
         ].join(',')
       );
     }
@@ -1221,9 +1445,17 @@ export async function exportPersonCsv(personId: number) {
   const rows: string[] = [];
 
   rows.push(
-    ['Person', 'Date', 'IN (Credit)', 'OUT (Debit)', 'Balance', 'Transaction Note'].join(',')
+    [
+      'Person',
+      'Date',
+      'IN (Credit)',
+      'OUT (Debit)',
+      'Balance',
+      'Transaction Note',
+    ].join(',')
   );
 
+  // Calculate running balance
   const asc = [...txns].sort((a, b) => a.date - b.date);
   let running = 0;
   const balanceMap = new Map<number, number>();
@@ -1238,12 +1470,12 @@ export async function exportPersonCsv(personId: number) {
   for (const t of desc) {
     rows.push(
       [
-        `"${person.name}"`,
-        `"${formatDateTime(t.date)}"`,
-        t.type === 'credit' ? formatAmount(t.amount) : '',
-        t.type === 'debit' ? formatAmount(t.amount) : '',
-        formatAmount(balanceMap.get(t.id)),
-        `"${t.note ?? ''}"`,
+        csvValue(person.name),
+        csvValue(formatDateTime(t.date)),
+        csvValue(t.type === 'credit' ? formatAmount(t.amount) : ''),
+        csvValue(t.type === 'debit' ? formatAmount(t.amount) : ''),
+        csvValue(formatAmount(balanceMap.get(t.id))),
+        csvValue(t.note ?? ''),
       ].join(',')
     );
   }
@@ -1262,4 +1494,4 @@ export async function exportPersonCsv(personId: number) {
   );
 }
 
-//---------------7-------------
+//-----------8----------------

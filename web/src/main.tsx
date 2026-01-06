@@ -1,9 +1,20 @@
-export default function App() {
-  return (
-    <div style={{ padding: 16 }}>
-      <h2>My Khata</h2>
-      <p>PWA version – coming soon</p>
-      <p>You can install this on iOS using “Add to Home Screen”.</p>
-    </div>
-  );
-}
+// import React from 'react';
+// import ReactDOM from 'react-dom/client';
+// import App from './App';
+
+// ReactDOM.createRoot(
+//   document.getElementById('root') as HTMLElement
+// ).render(
+//   <React.StrictMode>
+//     <App />
+//   </React.StrictMode>
+// );
+
+import 'expo-router/entry';
+
+
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/service-worker.js');
+//   });
+// }

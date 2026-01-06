@@ -10,8 +10,12 @@
     "newArchEnabled": true,
     "platforms": [
       "android",
-      "ios"
+      "ios",
+      "web"
     ],
+    "web" :{
+      "bundler": "metro"
+    },
     "ios": {
       "supportsTablet": true
     },

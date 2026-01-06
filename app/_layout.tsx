@@ -134,7 +134,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { initDatabase } from '@/database/init';
+import { initDatabase } from '@/database/service';
 import { CompanyProvider } from '@/context/CompanyContext';
 
 export default function RootLayout() {

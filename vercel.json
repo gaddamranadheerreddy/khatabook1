@@ -1,8 +1,8 @@
 {
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+  "buildCommand": "cd web && npm install && npm run build",
+  "outputDirectory": "web/dist",
+  "framework": null,
+  "routes": [
+    { "src": "/(.*)", "dest": "/" }
   ]
 }

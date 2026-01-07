@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { renameCompany, deleteCompany, updateCompany } from '@/database/service';
+import { deleteCompany, updateCompany } from '@/database/service';
 import { useCompany } from '@/context/CompanyContext';
 
 export default function ManageCompany() {

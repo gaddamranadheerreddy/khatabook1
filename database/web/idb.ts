@@ -214,7 +214,7 @@
 //------------5-------------
 
 //---------6-----------------
-import { openDB, IDBPDatabase } from '../../web/node_modules/idb';
+import { openDB, IDBPDatabase } from 'idb';
 import type {
   Person,
   Transaction,

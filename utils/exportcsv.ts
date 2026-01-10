@@ -1533,6 +1533,11 @@ const formatDateTime = (ts: number) =>
 ============================ */
 
 async function shareCsv(filename: string, content: string) {
+  if (Platform.OS === 'web') {
+    Alert.alert('Not supported', 'Sharing is not supported on web. Please use Download.');
+    return;
+  }
+  
   const uri = FileSystem.cacheDirectory + filename;
 
   await FileSystem.writeAsStringAsync(uri, content, {
@@ -1708,6 +1713,11 @@ export async function exportCompanyCsv(companyId: number | null) {
   const csvContent = rows.join('\n');
   const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
 
+  if (Platform.OS === 'web') {
+    downloadCsvWeb(filename, csvContent);
+    return;
+  }
+
   Alert.alert(
     'Export Company Ledger',
     'Choose export method',
@@ -1760,6 +1770,11 @@ export async function exportPersonCsv(personId: number) {
 
   const csvContent = rows.join('\n');
   const filename = `${person.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+  if (Platform.OS === 'web') {
+    downloadCsvWeb(filename, csvContent);
+    return;
+  }
 
   Alert.alert(
     'Export Person Ledger',

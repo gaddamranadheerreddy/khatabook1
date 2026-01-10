@@ -1546,6 +1546,10 @@ async function shareCsv(filename: string, content: string) {
 }
 
 async function downloadCsv(filename: string, content: string) {
+  if (Platform.OS === 'web') {
+    return downloadCsvWeb(filename, content);
+  }
+  
   if (Platform.OS !== 'android') {
     return shareCsv(filename, content);
   }
@@ -1767,4 +1771,40 @@ export async function exportPersonCsv(personId: number) {
     ]
   );
 }
+
+// function downloadCsvWeb(filename: string, csv: string) {
+//   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+//   const url = URL.createObjectURL(blob);
+
+//   const a = document.createElement('a');
+//   a.href = url;
+//   a.download = filename;
+//   a.style.display = 'none';
+
+//   document.body.appendChild(a);
+//   a.click();
+
+//   document.body.removeChild(a);
+//   URL.revokeObjectURL(url);
+// }
+
+function downloadCsvWeb(filename: string, content: string) {
+  const blob = new Blob([content], {
+    type: 'text/csv;charset=utf-8;',
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+
 //---------------9-------------

@@ -1,6 +1,4 @@
 
-Below is a **clean, plain copy-paste version** (no emojis, no extra formatting).
-You can paste this **directly into your app Info / Help screen**.
 
 ---
 

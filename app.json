@@ -14,7 +14,8 @@
       "web"
     ],
     "web" :{
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png"
     },
     "ios": {
       "supportsTablet": true

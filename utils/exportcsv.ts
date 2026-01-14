@@ -1528,11 +1528,20 @@ const formatDateTime = (ts: number) =>
     hour12: true,
   });
 
+const withBOM = (content: string) => '\uFEFF' + content;
+// console.log('EXPORT CSV FILE LOADED');
+
+
 /* ============================
    FILE HANDLING
 ============================ */
 
 async function shareCsv(filename: string, content: string) {
+  if (Platform.OS === 'web') {
+    downloadCsvWeb(filename, content);
+    return;
+  }
+  
   const uri = FileSystem.cacheDirectory + filename;
 
   await FileSystem.writeAsStringAsync(uri, content, {
@@ -1547,7 +1556,10 @@ async function shareCsv(filename: string, content: string) {
 
 async function downloadCsv(filename: string, content: string) {
   if (Platform.OS === 'web') {
-    return downloadCsvWeb(filename, content);
+    // console.log('WEB DOWNLOAD TRIGGERED');
+
+    downloadCsvWeb(filename, withBOM(content));
+    return;
   }
   
   if (Platform.OS !== 'android') {
@@ -1708,6 +1720,11 @@ export async function exportCompanyCsv(companyId: number | null) {
   const csvContent = rows.join('\n');
   const filename = `${company.name.replace(/\s+/g, '_')}_ledger.csv`;
 
+  if (Platform.OS === 'web') {
+    await downloadCsv(filename, '\uFEFF'+ csvContent);
+    return;
+  }
+
   Alert.alert(
     'Export Company Ledger',
     'Choose export method',
@@ -1760,6 +1777,11 @@ export async function exportPersonCsv(personId: number) {
 
   const csvContent = rows.join('\n');
   const filename = `${person.name.replace(/\s+/g, '_')}_ledger.csv`;
+
+  if (Platform.OS === 'web') {
+    await downloadCsv(filename, '\uFEFF'+ csvContent);
+    return;
+  }
 
   Alert.alert(
     'Export Person Ledger',

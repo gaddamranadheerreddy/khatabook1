@@ -136,6 +136,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { initDatabase } from '@/database/service';
 import { CompanyProvider } from '@/context/CompanyContext';
+import  Head  from 'expo-router/head';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -172,24 +173,68 @@ export default function RootLayout() {
 
 
   // ✅ CompanyProvider is mounted ONLY AFTER DB is ready
-  return (
-    <CompanyProvider>
-      <Stack screenOptions={{ headerShown: true }}>
-        <Stack.Screen name="index" options={{ title: 'My Khata' }} />
-        <Stack.Screen
-          name="add-person"
-          options={{ title: 'Add Person', presentation: 'modal' }}
+  // return (
+  //   <CompanyProvider>
+  //     <Stack screenOptions={{ headerShown: true }}>
+  //       <Stack.Screen name="index" options={{ title: 'My Khata' }} />
+  //       <Stack.Screen
+  //         name="add-person"
+  //         options={{ title: 'Add Person', presentation: 'modal' }}
+  //       />
+  //       <Stack.Screen name="ledger" options={{ title: 'Ledger' }} />
+  //       <Stack.Screen
+  //         name="add-transaction"
+  //         options={{ title: 'Add Transaction', presentation: 'modal' }}
+  //       />
+  //       <Stack.Screen name="+not-found" />
+  //     </Stack>
+  //     <StatusBar style="auto" />
+  //   </CompanyProvider>
+  // );
+
+    return (
+    <>
+      {/* 🌐 WEB FAVICONS */}
+      <Head>
+        <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png" />
+
+        <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png" />
+
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="192x192"
+          href="assets/images/android-chrome-192x192.png"
         />
-        <Stack.Screen name="ledger" options={{ title: 'Ledger' }} />
-        <Stack.Screen
-          name="add-transaction"
-          options={{ title: 'Add Transaction', presentation: 'modal' }}
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="512x512"
+          href="assets/images/android-chrome-512x512.png"
         />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </CompanyProvider>
+      </Head>
+
+      {/* 🧠 APP */}
+      <CompanyProvider>
+        <Stack screenOptions={{ headerShown: true }}>
+          <Stack.Screen name="index" options={{ title: 'My Khata' }} />
+          <Stack.Screen
+            name="add-person"
+            options={{ title: 'Add Person', presentation: 'modal' }}
+          />
+          <Stack.Screen name="ledger" options={{ title: 'Ledger' }} />
+          <Stack.Screen
+            name="add-transaction"
+            options={{ title: 'Add Transaction', presentation: 'modal' }}
+          />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </CompanyProvider>
+    </>
   );
+
 }
 
 const styles = StyleSheet.create({

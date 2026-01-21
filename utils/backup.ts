@@ -194,9 +194,6 @@ async function getGoogleAccessTokenNative(clientId?: string): Promise<string> {
 }
 
 export async function backupToGoogleDrive(companyId: number | null) {
-  const payload = await collectBackupData(companyId);
-  const name = filename(companyId);
-  const content = JSON.stringify(payload);
   const clientId =
     Platform.OS === 'android'
       ? process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID
@@ -207,6 +204,9 @@ export async function backupToGoogleDrive(companyId: number | null) {
   if (Platform.OS === 'web') {
     try {
       const token = await getGoogleAccessTokenWeb(clientId);
+      const payload = await collectBackupData(companyId);
+      const name = filename(companyId);
+      const content = JSON.stringify(payload);
       await uploadMultipartDrive(token, name, content);
       alert('Backup uploaded to Google Drive');
     } catch (e: any) {
@@ -217,6 +217,9 @@ export async function backupToGoogleDrive(companyId: number | null) {
 
   try {
     const token = await getGoogleAccessTokenNative(clientId);
+    const payload = await collectBackupData(companyId);
+    const name = filename(companyId);
+    const content = JSON.stringify(payload);
     await uploadMultipartDrive(token, name, content);
     Alert.alert('Backup', 'Uploaded to Google Drive');
   } catch (e: any) {

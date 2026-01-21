@@ -1683,7 +1683,9 @@ import {
   TouchableOpacity,
   RefreshControl,
   Pressable,
+  Alert,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import {
@@ -1692,10 +1694,13 @@ import {
   User,
   Building2,
   Download,
+  Cloud,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { exportCompanyCsv } from '@/utils/exportcsv';
+import { backupToGoogleDrive, restoreFromGoogleDrive } from '@/utils/backup';
 import { getPeopleWithBalances } from '@/database/service';
 import { PersonWithBalance } from '@/database/types';
 import { useCompany } from '@/context/CompanyContext';
@@ -1710,6 +1715,7 @@ export default function HomeScreen() {
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [companySheetOpen, setCompanySheetOpen] = useState(false);
+  const [restoreSheetOpen, setRestoreSheetOpen] = useState(false);
 
   const selectedCompany =
     selectedCompanyId !== null
@@ -1764,7 +1770,28 @@ export default function HomeScreen() {
           <Pressable onPress={() => exportCompanyCsv(selectedCompanyId)}>
             <Download size={22} color="#007AFF" />
           </Pressable>
-
+          <Pressable onPress={() => backupToGoogleDrive(selectedCompanyId)}>
+            <Cloud size={22} color="#007AFF" />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                setRestoreSheetOpen(true);
+              } else {
+                Alert.alert(
+                  'Restore from Drive',
+                  'Choose how you want to import data',
+                  [
+                    { text: 'Replace', onPress: () => restoreFromGoogleDrive('replace') },
+                    { text: 'Merge', onPress: () => restoreFromGoogleDrive('merge') },
+                    { text: 'Cancel', style: 'cancel' },
+                  ]
+                );
+              }
+            }}
+          >
+            <RefreshCw size={22} color="#007AFF" />
+          </Pressable>
           <Pressable onPress={() => router.push('/add-company')}>
             <Building2 size={22} color="#007AFF" />
           </Pressable>
@@ -1961,6 +1988,35 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
 
+        </Pressable>
+      )}
+
+      {/* RESTORE OPTIONS (WEB) */}
+      {restoreSheetOpen && Platform.OS === 'web' && (
+        <Pressable
+          style={styles.overlay}
+          onPress={() => setRestoreSheetOpen(false)}
+        >
+          <View style={styles.sheet}>
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => {
+                setRestoreSheetOpen(false);
+                restoreFromGoogleDrive('replace');
+              }}
+            >
+              <Text>Replace</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => {
+                setRestoreSheetOpen(false);
+                restoreFromGoogleDrive('merge');
+              }}
+            >
+              <Text>Merge</Text>
+            </TouchableOpacity>
+          </View>
         </Pressable>
       )}
 

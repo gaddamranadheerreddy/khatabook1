@@ -196,6 +196,7 @@ export default function RootLayout() {
     <>
       {/* 🌐 WEB FAVICONS */}
       <Head>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
         <link rel="icon" type="image/png" sizes="16x16" href="public/icons/favicon-16x16.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="public/icons/favicon-32x32.png" />
 

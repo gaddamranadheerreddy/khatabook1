@@ -137,6 +137,8 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { initDatabase } from '@/database/service';
 import { CompanyProvider } from '@/context/CompanyContext';
 import  Head  from 'expo-router/head';
+import { prepareGoogleWebAuth } from '@/utils/backup';
+import { Platform } from 'react-native';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -154,6 +156,12 @@ export default function RootLayout() {
     setupDatabase();
   }, []);
 
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+      prepareGoogleWebAuth(clientId);
+    }
+  }, []);
   if (!dbInitialized) {
     return (
       <View style={styles.loadingContainer}>

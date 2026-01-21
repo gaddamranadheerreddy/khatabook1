@@ -89,6 +89,8 @@ declare global {
   }
 }
 
+let webTokenClient: any | null = null;
+
 function ensureGoogleIdentityScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     const hasClient = !!window.google?.accounts?.oauth2;
@@ -112,31 +114,53 @@ function ensureGoogleIdentityScript(): Promise<void> {
   });
 }
 
+export async function prepareGoogleWebAuth(clientId?: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  if (!clientId) return;
+  if (window.google?.accounts?.oauth2) {
+    if (!webTokenClient) {
+      webTokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: () => {},
+      });
+    }
+    return;
+  }
+  await ensureGoogleIdentityScript();
+  if (window.google?.accounts?.oauth2 && !webTokenClient) {
+    webTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: () => {},
+    });
+  }
+}
+
 async function getGoogleAccessTokenWeb(clientId?: string): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    if (!clientId) {
+      reject(new Error('Missing EXPO_PUBLIC_GOOGLE_CLIENT_ID'));
+      return;
+    }
+    const oauth2 = window.google?.accounts?.oauth2;
+    if (!oauth2) {
+      reject(new Error('Google auth not ready. Please try again.'));
+      return;
+    }
+    if (!webTokenClient) {
+      webTokenClient = oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: () => {},
+      });
+    }
+    webTokenClient.callback = (resp: any) => {
+      if (resp?.access_token) resolve(resp.access_token);
+      else reject(new Error('Failed to retrieve access token'));
+    };
     try {
-      if (!clientId) {
-        reject(new Error('Missing EXPO_PUBLIC_GOOGLE_CLIENT_ID'));
-        return;
-      }
-      ensureGoogleIdentityScript()
-        .then(() => {
-          const oauth2 = window.google?.accounts?.oauth2;
-          if (!oauth2) {
-            reject(new Error('Google Identity Services script not loaded'));
-            return;
-          }
-          const client = oauth2.initTokenClient({
-            client_id: clientId,
-            scope: 'https://www.googleapis.com/auth/drive.file',
-            callback: (resp: any) => {
-              if (resp?.access_token) resolve(resp.access_token);
-              else reject(new Error('Failed to retrieve access token'));
-            },
-          });
-          client.requestAccessToken();
-        })
-        .catch(reject);
+      webTokenClient.requestAccessToken();
     } catch (e) {
       reject(e);
     }
@@ -181,9 +205,13 @@ export async function backupToGoogleDrive(companyId: number | null) {
       : process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
   if (Platform.OS === 'web') {
-    const token = await getGoogleAccessTokenWeb(clientId);
-    await uploadMultipartDrive(token, name, content);
-    alert('Backup uploaded to Google Drive');
+    try {
+      const token = await getGoogleAccessTokenWeb(clientId);
+      await uploadMultipartDrive(token, name, content);
+      alert('Backup uploaded to Google Drive');
+    } catch (e: any) {
+      alert(`Backup failed: ${e?.message ?? 'Unknown error'}`);
+    }
     return;
   }
 

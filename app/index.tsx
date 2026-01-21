@@ -1695,7 +1695,6 @@ import {
   Building2,
   Download,
   Cloud,
-  RefreshCw,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -1715,7 +1714,7 @@ export default function HomeScreen() {
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [companySheetOpen, setCompanySheetOpen] = useState(false);
-  const [restoreSheetOpen, setRestoreSheetOpen] = useState(false);
+  const [driveSheetOpen, setDriveSheetOpen] = useState(false);
 
   const selectedCompany =
     selectedCompanyId !== null
@@ -1770,27 +1769,8 @@ export default function HomeScreen() {
           <Pressable onPress={() => exportCompanyCsv(selectedCompanyId)}>
             <Download size={22} color="#007AFF" />
           </Pressable>
-          <Pressable onPress={() => backupToGoogleDrive(selectedCompanyId)}>
+          <Pressable onPress={() => setDriveSheetOpen(true)}>
             <Cloud size={22} color="#007AFF" />
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              if (Platform.OS === 'web') {
-                setRestoreSheetOpen(true);
-              } else {
-                Alert.alert(
-                  'Restore from Drive',
-                  'Choose how you want to import data',
-                  [
-                    { text: 'Replace', onPress: () => restoreFromGoogleDrive('replace') },
-                    { text: 'Merge', onPress: () => restoreFromGoogleDrive('merge') },
-                    { text: 'Cancel', style: 'cancel' },
-                  ]
-                );
-              }
-            }}
-          >
-            <RefreshCw size={22} color="#007AFF" />
           </Pressable>
           <Pressable onPress={() => router.push('/add-company')}>
             <Building2 size={22} color="#007AFF" />
@@ -1991,17 +1971,26 @@ export default function HomeScreen() {
         </Pressable>
       )}
 
-      {/* RESTORE OPTIONS (WEB) */}
-      {restoreSheetOpen && Platform.OS === 'web' && (
+      {/* DRIVE ACTIONS SHEET */}
+      {driveSheetOpen && (
         <Pressable
           style={styles.overlay}
-          onPress={() => setRestoreSheetOpen(false)}
+          onPress={() => setDriveSheetOpen(false)}
         >
           <View style={styles.sheet}>
             <TouchableOpacity
               style={styles.sheetItem}
               onPress={() => {
-                setRestoreSheetOpen(false);
+                setDriveSheetOpen(false);
+                backupToGoogleDrive(selectedCompanyId);
+              }}
+            >
+              <Text>Backup to Drive</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => {
+                setDriveSheetOpen(false);
                 restoreFromGoogleDrive('replace');
               }}
             >
@@ -2010,7 +1999,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.sheetItem}
               onPress={() => {
-                setRestoreSheetOpen(false);
+                setDriveSheetOpen(false);
                 restoreFromGoogleDrive('merge');
               }}
             >

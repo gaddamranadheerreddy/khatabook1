@@ -133,8 +133,8 @@ export async function prepareGoogleWebAuth(clientId?: string): Promise<void> {
       client_id: clientId,
       scope: 'https://www.googleapis.com/auth/drive.file',
       callback: () => {},
-    });
-  }
+  });
+}
 }
 
 async function getGoogleAccessTokenWeb(clientId?: string): Promise<string> {
@@ -160,7 +160,7 @@ async function getGoogleAccessTokenWeb(clientId?: string): Promise<string> {
       else reject(new Error('Failed to retrieve access token'));
     };
     try {
-      webTokenClient.requestAccessToken();
+      webTokenClient.requestAccessToken({ prompt: 'consent' });
     } catch (e) {
       reject(e);
     }

@@ -171,26 +171,53 @@ async function getGoogleAccessTokenNative(clientId?: string): Promise<string> {
   if (!clientId) {
     throw new Error('Missing EXPO_PUBLIC_GOOGLE_CLIENT_ID');
   }
+  if (/^https?:\/\//i.test(clientId)) {
+    throw new Error('Invalid Android client ID: remove http/https prefix');
+  }
   WebBrowser.maybeCompleteAuthSession();
 
-  const redirectUri = AuthSession.makeRedirectUri();
+  let redirectUri = AuthSession.makeRedirectUri();
+  try {
+    if (clientId.endsWith('.apps.googleusercontent.com')) {
+      const baseId = clientId.replace('.apps.googleusercontent.com', '');
+      const nativeScheme = `com.googleusercontent.apps.${baseId}:/oauth2redirect`;
+      redirectUri = nativeScheme;
+    }
+  } catch {}
 
   const request = new AuthRequest({
     clientId,
     redirectUri,
-    responseType: ResponseType.Token,
+    responseType: ResponseType.Code,
     scopes: ['https://www.googleapis.com/auth/drive.file'],
     prompt: Prompt.Consent,
-    usePKCE: false,
+    usePKCE: true,
   });
 
-  const discovery = { authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth' };
+  const discovery = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+  };
   const result = await request.promptAsync(discovery);
 
-  if (result.type !== 'success' || !result.params?.access_token) {
+  if (result.type !== 'success' || !result.params?.code) {
     throw new Error('Google authentication failed');
   }
-  return result.params.access_token as string;
+
+  const tokenResponse = await AuthSession.exchangeCodeAsync(
+    {
+      clientId,
+      code: result.params.code as string,
+      redirectUri,
+      extraParams: { code_verifier: request.codeVerifier! },
+    },
+    { tokenEndpoint: discovery.tokenEndpoint! }
+  );
+
+  if (!tokenResponse.accessToken) {
+    throw new Error('Failed to exchange authorization code');
+  }
+  return tokenResponse.accessToken;
 }
 
 export async function backupToGoogleDrive(companyId: number | null) {
